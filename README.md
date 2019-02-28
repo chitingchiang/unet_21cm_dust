@@ -3,4 +3,3 @@
 [U-Net](https://arxiv.org/abs/1505.04597)
 
 ![map animation](assets/maps_animation.gif)
-![map animation](assets/maps_animation2.gif)
