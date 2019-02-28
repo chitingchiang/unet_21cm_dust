@@ -20,9 +20,10 @@ class TrainUNet:
         self.output = self.output[:,:,:,0]*self.mask
 
         self.rl_lowl,self.rl_highl = calccl.calc_rl_lowl_highl(self.output,self.y)
-        self.loss1 = tf.reduce_mean(1.-self.rl_lowl)
-        self.loss2 = tf.reduce_mean(1.-self.rl_highl)
-        self.loss = self.loss1+self.loss2
+        self.loss1 = tf.reduce_sum(tf.abs(self.output-self.y))
+        self.loss2 = tf.reduce_mean(1.-self.rl_lowl)
+        self.loss3 = tf.reduce_mean(1.-self.rl_highl)
+        self.loss = self.loss1+8000000.*(self.loss2+self.loss3)
 
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
         with tf.control_dependencies(update_ops):
@@ -37,10 +38,10 @@ if __name__ == "__main__":
     dp = temp.split()[3]
 
     print('start reading valid data...')
-    fin = h5py.File('/mnt/ceph/users/ctchiang/cmb_dust_21cm/maps/val_64x64.hdf5','r')
+    fin = h5py.File('cmb_dust_21cm/maps/val_64x64.hdf5','r')
     mask_valid = fin['mask'][:]
     X_valid = np.moveaxis(fin['train_x'][:],1,-1)
-    y_valid = fin['train_y'][:]*mask_valid/100.
+    y_valid = fin['train_y'][:]*mask_valid
     print('done')
 
     n_pixel = X_valid.shape[1]
@@ -73,7 +74,7 @@ if __name__ == "__main__":
         total_parameters += variable_parameters
     print('total number of parameters: %d'%total_parameters)
 
-    fd = '/mnt/ceph/users/ctchiang/cmb_dust_21cm/loss_rl/ctmodel_dropout_tf/dp'+dp+'/'
+    fd = 'cmb_dust_21cm/tensorflow/dp'+dp+'/'
     model_fname = fd+'unet-model'
     loss_fname = fd+'training_valid_loss.dat'
     saver = tf.train.Saver()
@@ -88,10 +89,10 @@ if __name__ == "__main__":
 
         if n_epoch>0:
             print('start reading training data...')
-            fin = h5py.File('/mnt/ceph/users/ctchiang/cmb_dust_21cm/maps/train_l460_mask72_dust.hdf5','r')
+            fin = h5py.File('cmb_dust_21cm/maps/train_l460_mask72_dust.hdf5','r')
             mask_train = np.float32(fin['mask'][:])
             X_train = np.moveaxis(np.float32(fin['train_x'][:]),1,-1)
-            y_train = np.float32(fin['train_y'][:])*mask_train/100.
+            y_train = np.float32(fin['train_y'][:])*mask_train
             print('done')
 
             n_train = len(X_train)
@@ -150,10 +151,10 @@ if __name__ == "__main__":
             y_valid = None
 
             print('start reading test data...')
-            fin = h5py.File('/mnt/ceph/users/ctchiang/cmb_dust_21cm/maps/test_l460_mask72_dust.hdf5','r')
+            fin = h5py.File('cmb_dust_21cm/maps/test_l460_mask72_dust.hdf5','r')
             mask_test = np.float32(fin['mask'][:])
             X_test = np.moveaxis(np.float32(fin['train_x'][:]),1,-1)
-            y_test = np.float32(fin['train_y'][:])*mask_test/100.
+            y_test = np.float32(fin['train_y'][:])*mask_test
             print('done')
 
             fout = open(fd+'rl_test_pred.dat','w')

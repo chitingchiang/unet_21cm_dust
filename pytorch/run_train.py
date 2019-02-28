@@ -26,7 +26,7 @@ cond_lowl,cond_highl = calc_cond(n_pix,n_pix,lF,nl)
 cond_lowl = cond_lowl.to(device)
 cond_highl = cond_highl.to(device)
 
-fd = '/mnt/ceph/users/ctchiang/cmb_dust_21cm/loss_rl/ctmodel_dropout_newbin/'
+fd = 'cmb_dust_21cm/pytorch/'
 
 def train(model,X_train,y_train,mask_train,X_valid,y_valid,mask_valid,model_file,loss_file,lr=1e-3,n_batch=40,n_epoch=10):
     n_train = len(X_train)
@@ -55,9 +55,10 @@ def train(model,X_train,y_train,mask_train,X_valid,y_valid,mask_valid,model_file
             rl_batch_lowl,rl_batch_highl = calc_rl(y_batch,y_batch_pred,cond_lowl,cond_highl)
             rl_batch_lowl = rl_batch_lowl.to(device)
             rl_batch_highl = rl_batch_highl.to(device)
-            batch_loss1 = torch.mean(1.-rl_batch_lowl)
-            batch_loss2 = torch.mean(1.-rl_batch_highl)
-            batch_loss = batch_loss1+batch_loss2
+            batch_loss1 = torch.sum(torch.abs(y_batch_pred-y_batch))
+            batch_loss2 = torch.mean(1.-rl_batch_lowl)
+            batch_loss3 = torch.mean(1.-rl_batch_highl)
+            batch_loss = batch_loss1+8000000.*(batch_loss2+batch_loss3)
             with torch.no_grad():
                 model.train(False)
                 y_valid_pred = model(X_valid)
@@ -65,12 +66,13 @@ def train(model,X_train,y_train,mask_train,X_valid,y_valid,mask_valid,model_file
                 rl_valid_lowl,rl_valid_highl = calc_rl(y_valid,y_valid_pred,cond_lowl,cond_highl)
                 rl_valid_lowl = rl_valid_lowl.to(device)
                 rl_valid_highl = rl_valid_highl.to(device)
-                valid_loss1 = torch.mean(1.-rl_valid_lowl)
-                valid_loss2 = torch.mean(1.-rl_valid_highl)
-                valid_loss = valid_loss1+valid_loss2
+                valid_loss1 = torch.sum(torch.abs(y_valid_pred-y_valid))
+                valid_loss2 = torch.mean(1.-rl_valid_lowl)
+                valid_loss3 = torch.mean(1.-rl_valid_highl)
+                valid_loss = valid_loss1+8000000.*(valid_loss2+valid_loss3)
 #                scheduler.step(valid_loss)
-                print('epoch %d, step %d: %.3e %.3e %.3e %.3e %.3e %.3e'%(i_epoch,i_step,batch_loss.item(),batch_loss1.item(),batch_loss2.item(),valid_loss.item(),valid_loss1.item(),valid_loss2.item()))
-                loss_out.write('epoch %d, step %d: %.3e %.3e %.3e %.3e %.3e %.3e\n'%(i_epoch,i_step,batch_loss.item(),batch_loss1.item(),batch_loss2.item(),valid_loss.item(),valid_loss1.item(),valid_loss2.item()))
+                print('epoch %d, step %d: %.3e %.3e %.3e %.3e %.3e %.3e %.3e %.3e'%(i_epoch,i_step,batch_loss.item(),batch_loss1.item(),batch_loss2.item(),batch_loss3.item(),valid_loss.item(),valid_loss1.item(),valid_loss2.item(),valid_loss3.item()))
+                loss_out.write('epoch %d, step %d: %.3e %.3e %.3e %.3e %.3e %.3e %.3e %.3e\n'%(i_epoch,i_step,batch_loss.item(),batch_loss1.item(),batch_loss2.item(),batch_loss3.item(),valid_loss.item(),valid_loss1.item(),valid_loss2.item(),valid_loss3.item()))
 
             optimizer.zero_grad()
             batch_loss.backward()
@@ -92,10 +94,10 @@ if __name__ == "__main__":
     dp = temp.split()[3]
 
     print('start reading valid data...')
-    fin = h5py.File('/mnt/ceph/users/ctchiang/cmb_dust_21cm/maps/val_64x64.hdf5','r')
+    fin = h5py.File('cmb_dust_21cm/maps/val_64x64.hdf5','r')
     mask_valid = torch.from_numpy(fin['mask'][:]).to(device)
     X_valid = torch.from_numpy(fin['train_x'][:]).to(device)
-    y_valid = torch.from_numpy(fin['train_y'][:]).to(device)*mask_valid/100.
+    y_valid = torch.from_numpy(fin['train_y'][:]).to(device)*mask_valid
     print('done')
 
     n_pixel = X_valid.size()[2]
@@ -116,10 +118,10 @@ if __name__ == "__main__":
 
     if n_epoch>0:
         print('start reading training data...')
-        fin = h5py.File('/mnt/ceph/users/ctchiang/cmb_dust_21cm/maps/train_l460_mask72_dust.hdf5','r')
+        fin = h5py.File('cmb_dust_21cm/maps/train_l460_mask72_dust.hdf5','r')
         mask_train = np.float32(fin['mask'][:])
         X_train = np.float32(fin['train_x'][:])
-        y_train = np.float32(fin['train_y'][:])*mask_train/100.
+        y_train = np.float32(fin['train_y'][:])*mask_train
         print('done')
 
         lr = float(lr)
@@ -146,10 +148,10 @@ if __name__ == "__main__":
             y_valid_pred = None
 
             print('start reading test data...')
-            fin = h5py.File('/mnt/ceph/users/ctchiang/cmb_dust_21cm/maps/test_l460_mask72_dust.hdf5','r')
+            fin = h5py.File('cmb_dust_21cm/maps/test_l460_mask72_dust.hdf5','r')
             mask_test = np.float32(fin['mask'][:])
             X_test = np.float32(fin['train_x'][:])
-            y_test = np.float32(fin['train_y'][:])*mask_test/100.
+            y_test = np.float32(fin['train_y'][:])*mask_test
             print('done')
 
             fout = open(fd+'dp'+dp+'/rl_test_pred.dat','w')
