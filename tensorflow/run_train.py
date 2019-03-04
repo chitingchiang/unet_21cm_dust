@@ -7,7 +7,7 @@ from unet import UNet
 
 class TrainUNet:
     def __init__(self,n_pixel,n_channel_in,n_channel_first,n_channel_out,
-                 n_depth,n_convpatch,lrelu_slope,dp_rate,calccl):
+                 n_depth,n_convpatch,lrelu_slope,dp_rate,gamma,calccl):
 
         self.x = tf.placeholder(tf.float32,[None,n_pixel,n_pixel,n_channel_in])
         self.y = tf.placeholder(tf.float32,[None,n_pixel,n_pixel])
@@ -23,7 +23,7 @@ class TrainUNet:
         self.loss1 = tf.reduce_sum(tf.abs(self.output-self.y))
         self.loss2 = tf.reduce_mean(1.-self.rl_lowl)
         self.loss3 = tf.reduce_mean(1.-self.rl_highl)
-        self.loss = self.loss1+8000000.*(self.loss2+self.loss3)
+        self.loss = self.loss1+gamma*(self.loss2+self.loss3)
 
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
         with tf.control_dependencies(update_ops):
@@ -31,11 +31,12 @@ class TrainUNet:
 
 if __name__ == "__main__":
 
-    temp = input('enter n_epoch, n_batch, learning rate, and dropout rate:\n')
+    temp = input('enter n_epoch, n_batch, learning rate, dropout rate, and gamma:\n')
     n_epoch = np.int32(temp.split()[0])
     n_batch = np.int32(temp.split()[1])
     lr = temp.split()[2]
     dp = temp.split()[3]
+    gamma = temp.split()[4]
 
     print('start reading valid data...')
     fin = h5py.File('cmb_dust_21cm/maps/val_64x64.hdf5','r')
@@ -59,11 +60,10 @@ if __name__ == "__main__":
     nl = 32
 
     lrelu_slope = 0.
-    dp_rate = np.float64(dp)
 
     calccl = CalcPowerSpectrum(n_pixel,n_pixel,lF,nl)
     trainunet = TrainUNet(n_pixel,n_channel_in,n_channel_first,n_channel_out,
-                          n_depth,n_convpatch,lrelu_slope,dp_rate,calccl)
+                          n_depth,n_convpatch,lrelu_slope,float(dp),float(gamma),calccl)
     total_parameters = 0
     for variable in tf.trainable_variables():
         shape = variable.get_shape()
@@ -74,7 +74,7 @@ if __name__ == "__main__":
         total_parameters += variable_parameters
     print('total number of parameters: %d'%total_parameters)
 
-    fd = 'cmb_dust_21cm/tensorflow/dp'+dp+'/'
+    fd = 'cmb_dust_21cm/tensorflow/dp'+dp+'_gamma'+gamma+'/'
     model_fname = fd+'unet-model'
     loss_fname = fd+'training_valid_loss.dat'
     saver = tf.train.Saver()
