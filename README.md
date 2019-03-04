@@ -4,4 +4,4 @@
 
 ![map animation](assets/maps_animation.gif)
 
-![unet_structure](assets/unet.png)
+![unet_structure](assets/unet_structure.png)
