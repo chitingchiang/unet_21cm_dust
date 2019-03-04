@@ -3,3 +3,5 @@
 [U-Net](https://arxiv.org/abs/1505.04597)
 
 ![map animation](assets/maps_animation.gif)
+
+![unet_structure](unet.pdf)
