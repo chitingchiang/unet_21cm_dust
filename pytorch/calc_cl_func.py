@@ -25,7 +25,7 @@ def calc_cond(n0,n1,lF,nl):
     real_dof[cond] = 0
     real_dof = real_dof==1
 
-    lbin_lowl = (l>=30)*(l<100)
+    lbin_lowl = (l>0)*(l<100)
     lbin_highl = (l>=100)*(l<200)
 
     cond_lowl = lbin_lowl*real_dof

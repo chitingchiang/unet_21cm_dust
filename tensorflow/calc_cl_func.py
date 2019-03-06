@@ -37,7 +37,7 @@ class CalcPowerSpectrum:
             cond = (self.lbin==i)*self.real_dof
             self.nmodes[i] = np.sum(cond)
 
-        lbin_lowl = (l>=30)*(l<100)
+        lbin_lowl = (l>0)*(l<100)
         lbin_highl = (l>=100)*(l<200)
 
         self.cond_lowl = lbin_lowl*self.real_dof
