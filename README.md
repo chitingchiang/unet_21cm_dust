@@ -4,7 +4,7 @@
 
 The [cosmic microwave background](https://en.wikipedia.org/wiki/Cosmic_microwave_background) (CMB) is one of the most powerful astronomical probes to study the content and evolution of our universe. To extract the cosmological information from the measurement, it is crucial to remove the foreground contamination so that the analysis can be free of bias. The two most important foregrounds of CMB are synchrotron and dust.
 
-In this [project](https://arxiv.or/abs/1904.13265), we adopt a deep neural network approach to predict the microwave dust foreground in our galaxy using the galactic 21-cm data. Since the galactic 21-cm emission traces the neutral hydrogen in our galaxy and various components of the Milky Way (stars, dust, neutral and ionized hydrogen, etc.) trace each other, it is reasonable to expect that the galactic 21-cm data is correlated with the dust foreground.
+In this [project](https://arxiv.org/abs/1904.13265), we adopt a deep neural network approach to predict the microwave dust foreground in our galaxy using the galactic 21-cm data. Since the galactic 21-cm emission traces the neutral hydrogen in our galaxy and various components of the Milky Way (stars, dust, neutral and ionized hydrogen, etc.) trace each other, it is reasonable to expect that the galactic 21-cm data is correlated with the dust foreground.
 
 ## Data
 
